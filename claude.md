@@ -1,4 +1,4 @@
-# gemini.md — Money Tracker
+# claude.md — Money Tracker
 
 ## 1. Project Overview
 
