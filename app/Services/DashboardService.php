@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Carbon;
 
 class DashboardService
@@ -38,7 +39,7 @@ class DashboardService
     /**
      * Get balance per account for active accounts.
      */
-    public function getAccountDistribution(User $user): Collection
+    public function getAccountDistribution(User $user): SupportCollection
     {
         return $user->accounts()
             ->where('is_active', true)
@@ -56,7 +57,7 @@ class DashboardService
     /**
      * Get total expenses grouped by category for a given month/year.
      */
-    public function getExpenseByCategory(User $user, int $month, int $year): Collection
+    public function getExpenseByCategory(User $user, int $month, int $year): SupportCollection
     {
         return Transaction::whereHas('account', fn ($q) => $q->where('user_id', $user->id))
             ->where('type', 'expense')

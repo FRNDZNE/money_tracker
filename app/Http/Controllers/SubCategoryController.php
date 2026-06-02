@@ -21,7 +21,7 @@ class SubCategoryController extends Controller
 
         $this->subCategoryService->create($category, $request->validated());
 
-        return redirect()->route('categories.edit', $category)
+        return redirect()->route('categories.index')
             ->with('success', 'Sub-category created successfully.');
     }
 
@@ -31,7 +31,7 @@ class SubCategoryController extends Controller
 
         $this->subCategoryService->update($subCategory, $request->validated());
 
-        return redirect()->route('categories.edit', $category)
+        return redirect()->route('categories.index')
             ->with('success', 'Sub-category updated successfully.');
     }
 
@@ -41,7 +41,7 @@ class SubCategoryController extends Controller
 
         $this->subCategoryService->delete($subCategory);
 
-        return redirect()->route('categories.edit', $category)
+        return redirect()->route('categories.index')
             ->with('success', 'Sub-category deleted successfully.');
     }
 }

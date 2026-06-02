@@ -92,7 +92,7 @@ const submit = () => {
                                 v-model="form.initial_balance"
                                 type="number"
                                 min="0"
-                                step="1000"
+                                step="0.01"
                                 placeholder="0"
                                 class="w-full"
                             />

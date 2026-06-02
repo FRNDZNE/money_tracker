@@ -150,7 +150,7 @@ const submit = () => {
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <InputLabel for="amount" value="Amount (IDR)" class="mb-1.5" />
-                                <TextInput id="amount" v-model="form.amount" type="number" min="0.01" step="1000" class="w-full" />
+                                <TextInput id="amount" v-model="form.amount" type="number" min="0.01" step="0.01" class="w-full" />
                                 <InputError :message="form.errors.amount" class="mt-1.5" />
                             </div>
                             <div>

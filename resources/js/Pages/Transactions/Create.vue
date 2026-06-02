@@ -156,7 +156,7 @@ const submit = () => {
                                     v-model="form.amount"
                                     type="number"
                                     min="0.01"
-                                    step="1000"
+                                    step="0.01"
                                     placeholder="0"
                                     class="w-full"
                                 />

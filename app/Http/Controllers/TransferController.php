@@ -22,10 +22,9 @@ class TransferController extends Controller
 
     public function index(Request $request): Response
     {
-        $transfers = $this->transferService->getPaginated($request->user());
-
         return Inertia::render('Transfers/Index', [
-            'transfers' => $transfers,
+            'transfers' => $this->transferService->getPaginated($request->user()),
+            'accounts' => $this->accountService->getAllActive($request->user()),
         ]);
     }
 
