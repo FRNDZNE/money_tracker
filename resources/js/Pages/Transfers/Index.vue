@@ -96,51 +96,53 @@ const deleteTransfer = (id) => {
 
         <div class="p-6 lg:p-8">
             <div v-if="transfers?.data?.length" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200">
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">From</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">To</th>
-                            <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
-                            <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Note</th>
-                            <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <tr v-for="transfer in transfers.data" :key="transfer.id" class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-3.5 text-slate-500 whitespace-nowrap">{{ formatDate(transfer.transfer_date) }}</td>
-                            <td class="px-6 py-3.5">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
-                                        <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                        </svg>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[700px]">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">From</th>
+                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">To</th>
+                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
+                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Note</th>
+                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="transfer in transfers.data" :key="transfer.id" class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-3.5 text-slate-500 whitespace-nowrap">{{ formatDate(transfer.transfer_date) }}</td>
+                                <td class="px-6 py-3.5">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
+                                            <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                            </svg>
+                                        </div>
+                                        <span class="font-medium text-slate-800">{{ transfer.from_account?.name }}</span>
                                     </div>
-                                    <span class="font-medium text-slate-800">{{ transfer.from_account?.name }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-3.5">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                                        <svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l4-4m0 0l4 4m-4-4V3" />
-                                        </svg>
+                                </td>
+                                <td class="px-6 py-3.5">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                                            <svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l4-4m0 0l4 4m-4-4V3" />
+                                            </svg>
+                                        </div>
+                                        <span class="font-medium text-slate-800">{{ transfer.to_account?.name }}</span>
                                     </div>
-                                    <span class="font-medium text-slate-800">{{ transfer.to_account?.name }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-3.5 text-right font-semibold text-slate-900">{{ formatCurrency(transfer.amount) }}</td>
-                            <td class="px-6 py-3.5 text-slate-500 max-w-40 truncate">{{ transfer.note || '—' }}</td>
-                            <td class="px-6 py-3.5">
-                                <div class="flex items-center justify-end gap-2">
-                                    <button @click="openEdit(transfer)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
-                                    <button @click="deleteTransfer(transfer.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td class="px-6 py-3.5 text-right font-semibold text-slate-900">{{ formatCurrency(transfer.amount) }}</td>
+                                <td class="px-6 py-3.5 text-slate-500 max-w-40 truncate">{{ transfer.note || '—' }}</td>
+                                <td class="px-6 py-3.5">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button @click="openEdit(transfer)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
+                                        <button @click="deleteTransfer(transfer.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <!-- Pagination -->
                 <div v-if="transfers.last_page > 1" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
                     <p class="text-xs text-slate-500">Showing {{ transfers.from }}–{{ transfers.to }} of {{ transfers.total }}</p>
