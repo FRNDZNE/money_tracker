@@ -5,7 +5,10 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\FinancialInsightController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecurringTransactionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SavingsGoalController;
 use App\Http\Controllers\SubCategoryController;
@@ -45,10 +48,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Phase 2 — Analytics
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
+    // Phase 3 — Recurring Transactions
+    Route::resource('recurring-transactions', RecurringTransactionController::class)->except(['show']);
+
+    // Phase 3 — Financial Insights
+    Route::get('/insights', [FinancialInsightController::class, 'index'])->name('insights.index');
+
+    // Phase 3 — Exports
+    Route::get('/export/transactions/excel', [ExportController::class, 'transactionsExcel'])->name('export.transactions.excel');
+    Route::get('/export/reports/monthly/excel', [ExportController::class, 'monthlyReportExcel'])->name('export.reports.monthly.excel');
+    Route::get('/export/reports/monthly/pdf', [ExportController::class, 'monthlyReportPdf'])->name('export.reports.monthly.pdf');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';
-

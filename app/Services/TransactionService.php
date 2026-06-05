@@ -82,6 +82,40 @@ class TransactionService
     }
 
     /**
+     * Get all filtered transactions (no pagination) for export.
+     */
+    public function getFiltered(User $user, array $filters = []): Collection
+    {
+        $query = Transaction::whereHas('account', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->with(['account', 'category', 'subCategory'])
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('created_at', 'desc');
+
+        if (! empty($filters['type'])) {
+            $query->where('type', $filters['type']);
+        }
+
+        if (! empty($filters['account_id'])) {
+            $query->where('account_id', $filters['account_id']);
+        }
+
+        if (! empty($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        if (! empty($filters['month'])) {
+            $query->whereMonth('transaction_date', $filters['month']);
+        }
+
+        if (! empty($filters['year'])) {
+            $query->whereYear('transaction_date', $filters['year']);
+        }
+
+        return $query->get();
+    }
+
+    /**
      * Get the most recent transactions for the given user.
      */
     public function getRecent(User $user, int $limit = 10): Collection

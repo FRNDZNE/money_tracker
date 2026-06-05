@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -63,10 +64,38 @@ class AnalyticsController extends Controller
 
         $totalExpense = (float) $expenseQuery()->sum('amount');
 
+        // Daily expense breakdown
+        $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
+        $dailyRaw = $expenseQuery()
+            ->selectRaw("EXTRACT(DAY FROM transaction_date)::integer AS day, SUM(amount) AS total, COUNT(*) AS count")
+            ->groupByRaw("EXTRACT(DAY FROM transaction_date)")
+            ->pluck('total', 'day')
+            ->toArray();
+
+        $dailyCounts = $expenseQuery()
+            ->selectRaw("EXTRACT(DAY FROM transaction_date)::integer AS day, COUNT(*) AS count")
+            ->groupByRaw("EXTRACT(DAY FROM transaction_date)")
+            ->pluck('count', 'day')
+            ->toArray();
+
+        $dailyExpenses = [];
+        for ($d = 1; $d <= $daysInMonth; $d++) {
+            $date = Carbon::create($year, $month, $d);
+            $dailyExpenses[] = [
+                'day'       => $d,
+                'day_label' => $date->format('D'),
+                'date'      => $date->format('Y-m-d'),
+                'total'     => (float) ($dailyRaw[$d] ?? 0),
+                'count'     => (int) ($dailyCounts[$d] ?? 0),
+                'is_weekend' => $date->isWeekend(),
+            ];
+        }
+
         return Inertia::render('Analytics/Index', [
             'classification_breakdown' => $classificationBreakdown,
             'category_breakdown'       => $categoryBreakdown,
             'total_expense'            => $totalExpense,
+            'daily_expenses'           => $dailyExpenses,
             'filters'                  => [
                 'month' => $month,
                 'year'  => $year,
