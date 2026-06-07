@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -115,10 +116,33 @@ const resetFilters = () => {
     router.get(route('transactions.index'));
 };
 
-const deleteTransaction = (id) => {
-    if (confirm('Delete this transaction?')) {
-        router.delete(route('transactions.destroy', id));
-    }
+// ── Confirm Dialog ────────────────────────────────────────
+const dialog = ref({ show: false, title: '', message: '', type: 'danger', resolve: null });
+
+function confirmAction(options) {
+    return new Promise((resolve) => {
+        dialog.value = { ...options, show: true, resolve };
+    });
+}
+
+function onDialogConfirm() {
+    dialog.value.show = false;
+    dialog.value.resolve?.(true);
+}
+
+function onDialogCancel() {
+    dialog.value.show = false;
+    dialog.value.resolve?.(false);
+}
+
+const deleteTransaction = async (id) => {
+    const ok = await confirmAction({
+        title: 'Delete Transaction?',
+        message: 'This action cannot be undone.',
+        type: 'danger',
+        confirmText: 'Delete',
+    });
+    if (ok) router.delete(route('transactions.destroy', id));
 };
 
 // ── Helpers ───────────────────────────────────────────────
@@ -177,7 +201,7 @@ const months = [
 
         <div class="p-6 lg:p-8 space-y-4">
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <!-- Income -->
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
                     <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
@@ -201,28 +225,6 @@ const months = [
                     <div class="min-w-0">
                         <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Expense</p>
                         <p class="text-lg font-bold text-rose-600 mt-0.5 truncate">{{ formatCurrency(summary?.total_expense) }}</p>
-                    </div>
-                </div>
-
-                <!-- Net -->
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
-                    <div
-                        :class="['w-10 h-10 rounded-xl flex items-center justify-center shrink-0', (summary?.net ?? 0) >= 0 ? 'bg-emerald-50' : 'bg-rose-50']"
-                    >
-                        <svg
-                            :class="['w-5 h-5', (summary?.net ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500']"
-                            fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Net Cash Flow</p>
-                        <p
-                            :class="['text-lg font-bold mt-0.5 truncate', (summary?.net ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600']"
-                        >
-                            {{ (summary?.net ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(summary?.net) }}
-                        </p>
                     </div>
                 </div>
             </div>
@@ -453,4 +455,14 @@ const months = [
             </div>
         </form>
     </Modal>
+
+    <ConfirmDialog
+        :show="dialog.show"
+        :title="dialog.title"
+        :message="dialog.message"
+        :type="dialog.type"
+        :confirm-text="dialog.confirmText ?? 'Delete'"
+        @confirm="onDialogConfirm"
+        @cancel="onDialogCancel"
+    />
 </template>

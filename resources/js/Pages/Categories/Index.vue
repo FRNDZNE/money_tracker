@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -50,10 +51,26 @@ const submit = () => {
     }
 };
 
-const deleteCategory = (category) => {
-    if (confirm(`Delete "${category.name}"? All sub-categories will also be deleted.`)) {
-        router.delete(route('categories.destroy', category.id));
-    }
+// ── Confirm Dialog ────────────────────────────────────────
+const dialog = ref({ show: false, title: '', message: '', type: 'danger', resolve: null });
+
+function confirmAction(options) {
+    return new Promise((resolve) => {
+        dialog.value = { ...options, show: true, resolve };
+    });
+}
+
+function onDialogConfirm() { dialog.value.show = false; dialog.value.resolve?.(true); }
+function onDialogCancel()  { dialog.value.show = false; dialog.value.resolve?.(false); }
+
+const deleteCategory = async (category) => {
+    const ok = await confirmAction({
+        title: `Delete "${category.name}"?`,
+        message: 'All sub-categories will also be permanently deleted.',
+        type: 'danger',
+        confirmText: 'Delete',
+    });
+    if (ok) router.delete(route('categories.destroy', category.id));
 };
 
 // ── Sub-category management (inside edit modal) ───────────
@@ -94,8 +111,14 @@ const saveSub = (sub) => {
     );
 };
 
-const deleteSub = (sub) => {
-    if (confirm(`Delete sub-category "${sub.name}"?`)) {
+const deleteSub = async (sub) => {
+    const ok = await confirmAction({
+        title: `Delete "${sub.name}"?`,
+        message: 'This sub-category will be removed from all existing transactions.',
+        type: 'danger',
+        confirmText: 'Delete',
+    });
+    if (ok) {
         router.delete(route('categories.sub-categories.destroy', [editingCategoryId.value, sub.id]), {
             preserveScroll: true,
             preserveState: true,
@@ -279,4 +302,14 @@ const expenseCategories = computed(() => props.categories?.filter((c) => c.type 
             <InputError :message="subAddForm.errors.name" class="mt-1.5" />
         </div>
     </Modal>
+
+    <ConfirmDialog
+        :show="dialog.show"
+        :title="dialog.title"
+        :message="dialog.message"
+        :type="dialog.type"
+        :confirm-text="dialog.confirmText ?? 'Delete'"
+        @confirm="onDialogConfirm"
+        @cancel="onDialogCancel"
+    />
 </template>

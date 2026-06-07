@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -85,12 +86,28 @@ function submitTopUp() {
     });
 }
 
-// ── Delete ────────────────────────────────────────────────
-function deleteGoal(id) {
-    if (confirm('Delete this savings goal?')) {
-        router.delete(route('savings-goals.destroy', id));
-    }
+// ── Confirm Dialog ────────────────────────────────────────
+const dialog = ref({ show: false, title: '', message: '', type: 'danger', resolve: null });
+
+function confirmAction(options) {
+    return new Promise((resolve) => {
+        dialog.value = { ...options, show: true, resolve };
+    });
 }
+
+function onDialogConfirm() { dialog.value.show = false; dialog.value.resolve?.(true); }
+function onDialogCancel()  { dialog.value.show = false; dialog.value.resolve?.(false); }
+
+// ── Delete ────────────────────────────────────────────────
+const deleteGoal = async (id) => {
+    const ok = await confirmAction({
+        title: 'Delete Savings Goal?',
+        message: 'This goal and its top-up history will be deleted permanently.',
+        type: 'danger',
+        confirmText: 'Delete',
+    });
+    if (ok) router.delete(route('savings-goals.destroy', id));
+};
 
 // ── Helpers ───────────────────────────────────────────────
 const formatIDR = (n) =>
@@ -277,7 +294,7 @@ function progressColor(pct) {
                                     v-model="createForm.target_amount"
                                     type="number"
                                     min="1"
-                                    step="1000"
+                                    step="any"
                                     placeholder="e.g. 15000000"
                                     class="w-full"
                                 />
@@ -292,7 +309,7 @@ function progressColor(pct) {
                                     v-model="createForm.current_amount"
                                     type="number"
                                     min="0"
-                                    step="1000"
+                                    step="any"
                                     placeholder="Leave empty to start from 0"
                                     class="w-full"
                                 />
@@ -376,7 +393,7 @@ function progressColor(pct) {
                                     v-model="editForm.target_amount"
                                     type="number"
                                     min="1"
-                                    step="1000"
+                                    step="any"
                                     class="w-full"
                                 />
                                 <InputError :message="editForm.errors.target_amount" class="mt-1.5" />
@@ -390,7 +407,7 @@ function progressColor(pct) {
                                     v-model="editForm.current_amount"
                                     type="number"
                                     min="0"
-                                    step="1000"
+                                    step="any"
                                     placeholder="Leave empty to start from 0"
                                     class="w-full"
                                 />
@@ -459,7 +476,7 @@ function progressColor(pct) {
                                     v-model="topUpForm.amount"
                                     type="number"
                                     min="0.01"
-                                    step="1000"
+                                    step="any"
                                     placeholder="e.g. 500000"
                                     class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                     autofocus
@@ -489,4 +506,14 @@ function progressColor(pct) {
             </Transition>
         </Teleport>
     </AuthenticatedLayout>
+
+    <ConfirmDialog
+        :show="dialog.show"
+        :title="dialog.title"
+        :message="dialog.message"
+        :type="dialog.type"
+        :confirm-text="dialog.confirmText ?? 'Delete'"
+        @confirm="onDialogConfirm"
+        @cancel="onDialogCancel"
+    />
 </template>

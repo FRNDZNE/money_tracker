@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
@@ -63,11 +64,27 @@ function saveEdit(budget) {
     });
 }
 
-function deleteBudget(id) {
-    if (confirm('Remove this budget?')) {
-        router.delete(route('budgets.destroy', id));
-    }
+// ── Confirm Dialog ────────────────────────────────────────
+const dialog = ref({ show: false, title: '', message: '', type: 'danger', resolve: null });
+
+function confirmAction(options) {
+    return new Promise((resolve) => {
+        dialog.value = { ...options, show: true, resolve };
+    });
 }
+
+function onDialogConfirm() { dialog.value.show = false; dialog.value.resolve?.(true); }
+function onDialogCancel()  { dialog.value.show = false; dialog.value.resolve?.(false); }
+
+const deleteBudget = async (id) => {
+    const ok = await confirmAction({
+        title: 'Remove Budget?',
+        message: 'This will remove the monthly spending limit for this category.',
+        type: 'danger',
+        confirmText: 'Remove',
+    });
+    if (ok) router.delete(route('budgets.destroy', id));
+};
 
 function progressColor(spent, amount) {
     if (amount === 0) return 'bg-slate-300';
@@ -215,7 +232,7 @@ const formatIDR = (n) =>
                             v-model="addForm.amount"
                             type="number"
                             min="0"
-                            step="1000"
+                            step="any"
                             placeholder="e.g. 1500000"
                             class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         />
@@ -237,4 +254,14 @@ const formatIDR = (n) =>
 
         </div>
     </AuthenticatedLayout>
+
+    <ConfirmDialog
+        :show="dialog.show"
+        :title="dialog.title"
+        :message="dialog.message"
+        :type="dialog.type"
+        :confirm-text="dialog.confirmText ?? 'Delete'"
+        @confirm="onDialogConfirm"
+        @cancel="onDialogCancel"
+    />
 </template>

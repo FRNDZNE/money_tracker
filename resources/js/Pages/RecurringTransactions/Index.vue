@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -89,10 +90,26 @@ const submit = () => {
     }
 };
 
-const deleteItem = (id) => {
-    if (confirm('Delete this recurring transaction?')) {
-        router.delete(route('recurring-transactions.destroy', id));
-    }
+// ── Confirm Dialog ────────────────────────────────────────
+const dialog = ref({ show: false, title: '', message: '', type: 'danger', resolve: null });
+
+function confirmAction(options) {
+    return new Promise((resolve) => {
+        dialog.value = { ...options, show: true, resolve };
+    });
+}
+
+function onDialogConfirm() { dialog.value.show = false; dialog.value.resolve?.(true); }
+function onDialogCancel()  { dialog.value.show = false; dialog.value.resolve?.(false); }
+
+const deleteItem = async (id) => {
+    const ok = await confirmAction({
+        title: 'Delete Recurring Transaction?',
+        message: 'Future auto-generated entries will stop. Past transactions are not affected.',
+        type: 'danger',
+        confirmText: 'Delete',
+    });
+    if (ok) router.delete(route('recurring-transactions.destroy', id));
 };
 
 // ── Helpers ───────────────────────────────────────────────
@@ -310,4 +327,14 @@ const statusBadge = (item) => {
             </div>
         </form>
     </Modal>
+
+    <ConfirmDialog
+        :show="dialog.show"
+        :title="dialog.title"
+        :message="dialog.message"
+        :type="dialog.type"
+        :confirm-text="dialog.confirmText ?? 'Delete'"
+        @confirm="onDialogConfirm"
+        @cancel="onDialogCancel"
+    />
 </template>

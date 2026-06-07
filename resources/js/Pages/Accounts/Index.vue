@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
+import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -71,10 +72,26 @@ const accountTypeBadge = (type) =>
 const accountTypeLabel = (type) =>
     ({ cash: 'Cash', bank: 'Bank', e_wallet: 'E-Wallet' }[type] || type);
 
-const deleteAccount = (account) => {
-    if (confirm(`Delete "${account.name}"? This will also delete all related transactions.`)) {
-        router.delete(route('accounts.destroy', account.id));
-    }
+// ── Confirm Dialog ────────────────────────────────────────
+const dialog = ref({ show: false, title: '', message: '', type: 'danger', resolve: null });
+
+function confirmAction(options) {
+    return new Promise((resolve) => {
+        dialog.value = { ...options, show: true, resolve };
+    });
+}
+
+function onDialogConfirm() { dialog.value.show = false; dialog.value.resolve?.(true); }
+function onDialogCancel()  { dialog.value.show = false; dialog.value.resolve?.(false); }
+
+const deleteAccount = async (account) => {
+    const ok = await confirmAction({
+        title: `Delete "${account.name}"?`,
+        message: 'All transactions linked to this account will also be permanently deleted.',
+        type: 'danger',
+        confirmText: 'Delete Account',
+    });
+    if (ok) router.delete(route('accounts.destroy', account.id));
 };
 </script>
 
@@ -227,4 +244,14 @@ const deleteAccount = (account) => {
             </div>
         </form>
     </Modal>
+
+    <ConfirmDialog
+        :show="dialog.show"
+        :title="dialog.title"
+        :message="dialog.message"
+        :type="dialog.type"
+        :confirm-text="dialog.confirmText ?? 'Delete'"
+        @confirm="onDialogConfirm"
+        @cancel="onDialogCancel"
+    />
 </template>

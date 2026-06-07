@@ -64,7 +64,7 @@ const submit = () => {
                                 v-model="form.target_amount"
                                 type="number"
                                 min="1"
-                                step="1000"
+                                step="any"
                                 placeholder="e.g. 15000000"
                                 class="w-full"
                             />
@@ -79,7 +79,7 @@ const submit = () => {
                                 v-model="form.current_amount"
                                 type="number"
                                 min="0"
-                                step="1000"
+                                step="any"
                                 placeholder="0"
                                 class="w-full"
                             />

@@ -67,7 +67,7 @@ const submit = () => {
                                 v-model="form.target_amount"
                                 type="number"
                                 min="1"
-                                step="1000"
+                                step="any"
                                 class="w-full"
                             />
                             <InputError :message="form.errors.target_amount" class="mt-1.5" />
@@ -81,7 +81,7 @@ const submit = () => {
                                 v-model="form.current_amount"
                                 type="number"
                                 min="0"
-                                step="1000"
+                                step="any"
                                 class="w-full"
                             />
                             <InputError :message="form.errors.current_amount" class="mt-1.5" />
