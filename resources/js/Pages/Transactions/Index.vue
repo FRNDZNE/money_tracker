@@ -9,6 +9,7 @@ import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
     transactions: Object,
+    summary: Object,
     accounts: Array,
     categories: Array,
     filters: Object,
@@ -90,6 +91,8 @@ const filterType = ref(props.filters?.type || '');
 const filterAccount = ref(props.filters?.account_id || '');
 const filterMonth = ref(props.filters?.month || '');
 const filterYear = ref(props.filters?.year || new Date().getFullYear().toString());
+const filterDateFrom = ref(props.filters?.date_from || '');
+const filterDateTo = ref(props.filters?.date_to || '');
 
 const applyFilters = () => {
     router.get(route('transactions.index'), {
@@ -97,6 +100,8 @@ const applyFilters = () => {
         account_id: filterAccount.value || undefined,
         month: filterMonth.value || undefined,
         year: filterYear.value || undefined,
+        date_from: filterDateFrom.value || undefined,
+        date_to: filterDateTo.value || undefined,
     }, { preserveState: true, replace: true });
 };
 
@@ -105,6 +110,8 @@ const resetFilters = () => {
     filterAccount.value = '';
     filterMonth.value = '';
     filterYear.value = new Date().getFullYear().toString();
+    filterDateFrom.value = '';
+    filterDateTo.value = '';
     router.get(route('transactions.index'));
 };
 
@@ -145,7 +152,14 @@ const months = [
                     <p class="text-sm text-slate-500 mt-0.5">{{ transactions?.total || 0 }} transactions</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <a :href="route('export.transactions.excel', { type: filterType || undefined, account_id: filterAccount || undefined, month: filterMonth || undefined, year: filterYear || undefined })" class="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium rounded-lg transition-colors">
+                    <a :href="route('export.transactions.excel', {
+                        type: filterType || undefined,
+                        account_id: filterAccount || undefined,
+                        month: filterMonth || undefined,
+                        year: filterYear || undefined,
+                        date_from: filterDateFrom || undefined,
+                        date_to: filterDateTo || undefined,
+                    })" class="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium rounded-lg transition-colors">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                         </svg>
@@ -162,6 +176,57 @@ const months = [
         </template>
 
         <div class="p-6 lg:p-8 space-y-4">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Income -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Income</p>
+                        <p class="text-lg font-bold text-blue-600 mt-0.5 truncate">{{ formatCurrency(summary?.total_income) }}</p>
+                    </div>
+                </div>
+
+                <!-- Expense -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+                    <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Expense</p>
+                        <p class="text-lg font-bold text-rose-600 mt-0.5 truncate">{{ formatCurrency(summary?.total_expense) }}</p>
+                    </div>
+                </div>
+
+                <!-- Net -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+                    <div
+                        :class="['w-10 h-10 rounded-xl flex items-center justify-center shrink-0', (summary?.net ?? 0) >= 0 ? 'bg-emerald-50' : 'bg-rose-50']"
+                    >
+                        <svg
+                            :class="['w-5 h-5', (summary?.net ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500']"
+                            fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Net Cash Flow</p>
+                        <p
+                            :class="['text-lg font-bold mt-0.5 truncate', (summary?.net ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600']"
+                        >
+                            {{ (summary?.net ?? 0) >= 0 ? '+' : '' }}{{ formatCurrency(summary?.net) }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filters -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
                 <div class="flex flex-wrap items-end gap-3">
@@ -193,6 +258,24 @@ const months = [
                             <option value="">All Years</option>
                             <option v-for="y in [2024, 2025, 2026, 2027]" :key="y" :value="y.toString()">{{ y }}</option>
                         </select>
+                    </div>
+                    <!-- Date Range Separator -->
+                    <div class="h-8 w-px bg-slate-200 self-end mb-0.5 hidden sm:block"></div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-medium text-slate-500">From Date</label>
+                        <input
+                            v-model="filterDateFrom"
+                            type="date"
+                            class="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                        />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-medium text-slate-500">To Date</label>
+                        <input
+                            v-model="filterDateTo"
+                            type="date"
+                            class="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                        />
                     </div>
                     <div class="flex items-center gap-2">
                         <button @click="applyFilters" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">Apply</button>
@@ -248,7 +331,14 @@ const months = [
                 <div v-if="transactions.last_page > 1" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
                     <p class="text-xs text-slate-500">Showing {{ transactions.from }}–{{ transactions.to }} of {{ transactions.total }}</p>
                     <div class="flex items-center gap-1">
-                        <a v-for="link in transactions.links" :key="link.label" :href="link.url || '#'" :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', link.active ? 'bg-emerald-600 text-white' : link.url ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 cursor-not-allowed']" v-html="link.label" />
+                        <button
+                            v-for="link in transactions.links"
+                            :key="link.label"
+                            :disabled="!link.url"
+                            @click="link.url && router.visit(link.url, { preserveState: true })"
+                            :class="['px-3 py-1.5 text-xs font-medium rounded-lg transition-colors', link.active ? 'bg-emerald-600 text-white' : link.url ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 cursor-not-allowed']"
+                            v-html="link.label"
+                        />
                     </div>
                 </div>
             </div>

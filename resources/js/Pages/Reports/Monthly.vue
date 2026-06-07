@@ -28,6 +28,29 @@ const formatIDR = (n) =>
     new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 
 const totalExpense = computed(() => props.report.total_expense);
+
+// Sub-category breakdown toggle
+const expandedCategories = ref(new Set());
+
+function toggleCategory(categoryId) {
+    if (expandedCategories.value.has(categoryId)) {
+        expandedCategories.value.delete(categoryId);
+    } else {
+        expandedCategories.value.add(categoryId);
+    }
+    // Force reactivity update
+    expandedCategories.value = new Set(expandedCategories.value);
+}
+
+function isExpanded(categoryId) {
+    return expandedCategories.value.has(categoryId);
+}
+
+// Get sub-category data for a given category
+function getSubCategories(categoryId) {
+    const entry = props.report.sub_category_breakdown?.find(c => c.category_id === categoryId);
+    return entry?.sub_categories || [];
+}
 </script>
 
 <template>
@@ -120,7 +143,17 @@ const totalExpense = computed(() => props.report.total_expense);
                     <ul v-else class="divide-y divide-slate-100">
                         <li v-for="cat in report.expense_categories" :key="cat.category_id" class="px-6 py-3">
                             <div class="flex items-center justify-between mb-1.5">
-                                <span class="text-sm font-medium text-slate-700">{{ cat.category_name }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium text-slate-700">{{ cat.category_name }}</span>
+                                    <button
+                                        v-if="getSubCategories(cat.category_id).length > 0"
+                                        @click="toggleCategory(cat.category_id)"
+                                        class="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-0.5 transition-colors"
+                                    >
+                                        <svg :class="['w-3.5 h-3.5 transition-transform', isExpanded(cat.category_id) ? 'rotate-90' : '']" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                                        {{ getSubCategories(cat.category_id).length }} sub
+                                    </button>
+                                </div>
                                 <span class="text-sm font-semibold text-rose-600">{{ formatIDR(cat.total) }}</span>
                             </div>
                             <div class="w-full bg-slate-100 rounded-full h-1.5">
@@ -132,6 +165,35 @@ const totalExpense = computed(() => props.report.total_expense);
                             <p class="text-xs text-slate-400 mt-0.5">
                                 {{ totalExpense > 0 ? Math.round((cat.total / totalExpense) * 100) : 0 }}% · {{ cat.count }} transaction(s)
                             </p>
+                            <!-- Sub-category rows -->
+                            <Transition
+                                enter-active-class="transition-all duration-200 ease-out"
+                                enter-from-class="opacity-0 max-h-0"
+                                enter-to-class="opacity-100 max-h-96"
+                                leave-active-class="transition-all duration-150 ease-in"
+                                leave-from-class="opacity-100 max-h-96"
+                                leave-to-class="opacity-0 max-h-0"
+                            >
+                                <ul v-if="isExpanded(cat.category_id)" class="mt-2 space-y-1.5 overflow-hidden">
+                                    <li
+                                        v-for="sub in getSubCategories(cat.category_id)"
+                                        :key="sub.sub_category_id"
+                                        class="ml-4 pl-3 border-l-2 border-slate-100"
+                                    >
+                                        <div class="flex items-center justify-between mb-0.5">
+                                            <span class="text-xs text-slate-600">{{ sub.sub_category_name }}</span>
+                                            <span class="text-xs font-semibold text-rose-500">{{ formatIDR(sub.total) }}</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1">
+                                            <div
+                                                class="h-1 rounded-full bg-rose-300"
+                                                :style="{ width: cat.total > 0 ? Math.round((sub.total / cat.total) * 100) + '%' : '0%' }"
+                                            />
+                                        </div>
+                                        <p class="text-xs text-slate-400 mt-0.5">{{ sub.count }} transaction(s)</p>
+                                    </li>
+                                </ul>
+                            </Transition>
                         </li>
                     </ul>
                 </div>
@@ -161,6 +223,40 @@ const totalExpense = computed(() => props.report.total_expense);
                             </p>
                         </li>
                     </ul>
+                </div>
+            </div>
+
+            <!-- Sub-category Detail Section -->
+            <div v-if="report.sub_category_breakdown?.length" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100">
+                    <h2 class="text-sm font-semibold text-slate-800">Expense Detail by Sub-category</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Only categories with sub-categories assigned are shown</p>
+                </div>
+                <div class="divide-y divide-slate-100">
+                    <div v-for="catGroup in report.sub_category_breakdown" :key="catGroup.category_id" class="px-6 py-4">
+                        <h3 class="text-sm font-semibold text-slate-800 mb-3">{{ catGroup.category_name }}</h3>
+                        <div class="space-y-2">
+                            <div
+                                v-for="sub in catGroup.sub_categories"
+                                :key="sub.sub_category_id"
+                                class="flex items-center gap-3"
+                            >
+                                <div class="w-32 shrink-0">
+                                    <p class="text-xs font-medium text-slate-700 truncate">{{ sub.sub_category_name }}</p>
+                                    <p class="text-xs text-slate-400">{{ sub.count }} tx</p>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                        <div
+                                            class="h-1.5 rounded-full bg-rose-400 transition-all duration-500"
+                                            :style="{ width: report.total_expense > 0 ? Math.round((sub.total / report.total_expense) * 100) + '%' : '0%' }"
+                                        />
+                                    </div>
+                                </div>
+                                <span class="text-sm font-semibold text-rose-600 shrink-0 w-28 text-right">{{ formatIDR(sub.total) }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

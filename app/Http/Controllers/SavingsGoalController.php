@@ -43,7 +43,10 @@ class SavingsGoalController extends Controller
 
     public function store(StoreSavingsGoalRequest $request): RedirectResponse
     {
-        $this->savingsGoalService->create($request->user(), $request->validated());
+        $data = $request->validated();
+        $data['current_amount'] = $data['current_amount'] ?? 0;
+
+        $this->savingsGoalService->create($request->user(), $data);
 
         return redirect()->route('savings-goals.index')
             ->with('success', 'Savings goal created successfully.');
@@ -68,7 +71,10 @@ class SavingsGoalController extends Controller
     {
         abort_if($savingsGoal->user_id !== auth()->id(), 403);
 
-        $this->savingsGoalService->update($savingsGoal, $request->validated());
+        $data = $request->validated();
+        $data['current_amount'] = $data['current_amount'] ?? 0;
+
+        $this->savingsGoalService->update($savingsGoal, $data);
 
         return redirect()->route('savings-goals.index')
             ->with('success', 'Savings goal updated successfully.');

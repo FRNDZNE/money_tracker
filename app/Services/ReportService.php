@@ -89,14 +89,48 @@ class ReportService
             })
             ->values();
 
+        // Sub-category breakdown for expenses (grouped under parent category)
+        $subCategoryBreakdown = $baseQuery()
+            ->where('type', 'expense')
+            ->with(['category', 'subCategory'])
+            ->get()
+            ->filter(fn ($tx) => $tx->sub_category_id !== null)
+            ->groupBy('category_id')
+            ->map(function ($transactions) {
+                $category = $transactions->first()->category;
+
+                $subs = $transactions
+                    ->groupBy('sub_category_id')
+                    ->map(function ($subTxs) {
+                        $sub = $subTxs->first()->subCategory;
+                        return [
+                            'sub_category_id'   => $sub?->id,
+                            'sub_category_name' => $sub?->name ?? 'Unknown',
+                            'total'             => (float) $subTxs->sum('amount'),
+                            'count'             => $subTxs->count(),
+                        ];
+                    })
+                    ->values()
+                    ->sortByDesc('total')
+                    ->values();
+
+                return [
+                    'category_id'    => $category?->id,
+                    'category_name'  => $category?->name ?? 'Uncategorized',
+                    'sub_categories' => $subs,
+                ];
+            })
+            ->values();
+
         return [
-            'month'              => $month,
-            'year'               => $year,
-            'total_income'       => $totalIncome,
-            'total_expense'      => $totalExpense,
-            'net'                => $totalIncome - $totalExpense,
-            'expense_categories' => $categoryBreakdown,
-            'income_categories'  => $incomeBreakdown,
+            'month'                  => $month,
+            'year'                   => $year,
+            'total_income'           => $totalIncome,
+            'total_expense'          => $totalExpense,
+            'net'                    => $totalIncome - $totalExpense,
+            'expense_categories'     => $categoryBreakdown,
+            'income_categories'      => $incomeBreakdown,
+            'sub_category_breakdown' => $subCategoryBreakdown,
         ];
     }
 

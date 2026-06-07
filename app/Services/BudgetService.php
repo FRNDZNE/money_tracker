@@ -23,10 +23,8 @@ class BudgetService
             ->get();
 
         return $budgets->map(function (Budget $budget) use ($month, $year) {
-            $spent = (float) Transaction::where('account_id', function ($q) use ($budget) {
-                $q->select('id')
-                    ->from('accounts')
-                    ->where('user_id', $budget->user_id);
+            $spent = (float) Transaction::whereHas('account', function ($q) use ($budget) {
+                $q->where('user_id', $budget->user_id);
             })
                 ->where('category_id', $budget->category_id)
                 ->where('type', 'expense')

@@ -350,7 +350,7 @@ const accountTypeColor = (type) => {
                     </div>
                     <div v-else class="py-12 text-center">
                         <p class="text-sm text-slate-400">No transactions yet</p>
-                        <a :href="route('transactions.create')" class="text-sm text-emerald-600 hover:underline mt-1 inline-block">
+                        <a :href="route('transactions.index')" class="text-sm text-emerald-600 hover:underline mt-1 inline-block">
                             Record your first transaction →
                         </a>
                     </div>

@@ -24,16 +24,17 @@ class TransactionController extends Controller
 
     public function index(Request $request): Response
     {
-        $transactions = $this->transactionService->getPaginated(
-            $request->user(),
-            $request->only(['type', 'account_id', 'category_id', 'month', 'year'])
-        );
+        $filters = $request->only(['type', 'account_id', 'category_id', 'month', 'year', 'date_from', 'date_to']);
+
+        $transactions = $this->transactionService->getPaginated($request->user(), $filters);
+        $summary      = $this->transactionService->getSummary($request->user(), $filters);
 
         return Inertia::render('Transactions/Index', [
             'transactions' => $transactions,
-            'accounts' => $this->accountService->getAllActive($request->user()),
-            'categories' => $this->categoryService->getAll($request->user()),
-            'filters' => $request->only(['type', 'account_id', 'category_id', 'month', 'year']),
+            'summary'      => $summary,
+            'accounts'     => $this->accountService->getAllActive($request->user()),
+            'categories'   => $this->categoryService->getAll($request->user()),
+            'filters'      => $filters,
         ]);
     }
 

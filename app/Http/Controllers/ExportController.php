@@ -23,7 +23,7 @@ class ExportController extends Controller
      */
     public function transactionsExcel(Request $request): BinaryFileResponse
     {
-        $filters = $request->only(['type', 'account_id', 'category_id', 'month', 'year']);
+        $filters = $request->only(['type', 'account_id', 'category_id', 'month', 'year', 'date_from', 'date_to']);
         $transactions = $this->transactionService->getFiltered($request->user(), $filters);
 
         $filename = 'transactions_' . now()->format('Y-m-d_His') . '.xlsx';

@@ -40,6 +40,14 @@ class TransactionService
             $query->whereYear('transaction_date', $filters['year']);
         }
 
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('transaction_date', '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('transaction_date', '<=', $filters['date_to']);
+        }
+
         return $query->paginate(15)->withQueryString();
     }
 
@@ -112,6 +120,14 @@ class TransactionService
             $query->whereYear('transaction_date', $filters['year']);
         }
 
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('transaction_date', '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('transaction_date', '<=', $filters['date_to']);
+        }
+
         return $query->get();
     }
 
@@ -126,5 +142,55 @@ class TransactionService
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Get aggregated income/expense summary for the current filters.
+     * Returns total_income, total_expense, net, and transaction count.
+     */
+    public function getSummary(User $user, array $filters = []): array
+    {
+        $base = Transaction::whereHas('account', fn ($q) => $q->where('user_id', $user->id));
+
+        if (! empty($filters['account_id'])) {
+            $base->where('account_id', $filters['account_id']);
+        }
+        if (! empty($filters['category_id'])) {
+            $base->where('category_id', $filters['category_id']);
+        }
+        if (! empty($filters['month'])) {
+            $base->whereMonth('transaction_date', $filters['month']);
+        }
+        if (! empty($filters['year'])) {
+            $base->whereYear('transaction_date', $filters['year']);
+        }
+        if (! empty($filters['date_from'])) {
+            $base->whereDate('transaction_date', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $base->whereDate('transaction_date', '<=', $filters['date_to']);
+        }
+
+        // If filtering by a specific type we still want both totals shown
+        $income  = (float) (clone $base)->where('type', 'income')->sum('amount');
+        $expense = (float) (clone $base)->where('type', 'expense')->sum('amount');
+        $count   = (int) (clone $base)->count();
+
+        if (! empty($filters['type'])) {
+            // When a specific type is filtered, set the opposite side to 0
+            if ($filters['type'] === 'income') {
+                $expense = 0;
+            } else {
+                $income = 0;
+            }
+            $count = (int) (clone $base)->where('type', $filters['type'])->count();
+        }
+
+        return [
+            'total_income'  => $income,
+            'total_expense' => $expense,
+            'net'           => $income - $expense,
+            'count'         => $count,
+        ];
     }
 }
