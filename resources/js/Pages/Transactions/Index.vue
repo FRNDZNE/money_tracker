@@ -6,7 +6,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 
 const props = defineProps({
     transactions: Object,
@@ -88,32 +88,50 @@ const submit = () => {
 };
 
 // ── Filters ───────────────────────────────────────────────
-const filterType = ref(props.filters?.type || '');
+const filterType    = ref(props.filters?.type       || '');
 const filterAccount = ref(props.filters?.account_id || '');
-const filterMonth = ref(props.filters?.month || '');
-const filterYear = ref(props.filters?.year || new Date().getFullYear().toString());
+const filterMonth   = ref(props.filters?.month      || '');
+const filterYear    = ref(props.filters?.year       || new Date().getFullYear().toString());
 const filterDateFrom = ref(props.filters?.date_from || '');
-const filterDateTo = ref(props.filters?.date_to || '');
+const filterDateTo   = ref(props.filters?.date_to   || '');
+
+// Debounce helper — delays execution until user stops changing filter
+let debounceTimer = null;
 
 const applyFilters = () => {
-    router.get(route('transactions.index'), {
-        type: filterType.value || undefined,
-        account_id: filterAccount.value || undefined,
-        month: filterMonth.value || undefined,
-        year: filterYear.value || undefined,
-        date_from: filterDateFrom.value || undefined,
-        date_to: filterDateTo.value || undefined,
-    }, { preserveState: true, replace: true });
+    router.get(
+        route('transactions.index'),
+        {
+            type:       filterType.value    || undefined,
+            account_id: filterAccount.value || undefined,
+            month:      filterMonth.value   || undefined,
+            year:       filterYear.value    || undefined,
+            date_from:  filterDateFrom.value || undefined,
+            date_to:    filterDateTo.value   || undefined,
+        },
+        { preserveState: true, preserveScroll: true, replace: true },
+    );
 };
 
+// Watch all filter refs — auto-apply with 400ms debounce
+watch(
+    [filterType, filterAccount, filterMonth, filterYear, filterDateFrom, filterDateTo],
+    () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(applyFilters, 400);
+    },
+);
+
+onUnmounted(() => clearTimeout(debounceTimer));
+
 const resetFilters = () => {
-    filterType.value = '';
+    filterType.value    = '';
     filterAccount.value = '';
-    filterMonth.value = '';
-    filterYear.value = new Date().getFullYear().toString();
+    filterMonth.value   = '';
+    filterYear.value    = new Date().getFullYear().toString();
     filterDateFrom.value = '';
-    filterDateTo.value = '';
-    router.get(route('transactions.index'));
+    filterDateTo.value   = '';
+    // resetFilters triggers the watch above automatically
 };
 
 // ── Confirm Dialog ────────────────────────────────────────
@@ -279,8 +297,7 @@ const months = [
                             class="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
                         />
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button @click="applyFilters" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors">Apply</button>
+                    <div class="flex items-center gap-2 self-end">
                         <button @click="resetFilters" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Reset</button>
                     </div>
                 </div>
