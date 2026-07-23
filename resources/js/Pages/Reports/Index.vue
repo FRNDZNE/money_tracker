@@ -9,6 +9,14 @@ const props = defineProps({
     filters: Object,
 });
 
+const headers = [
+    { text: "Month", value: "month" },
+    { text: "Income", value: "income" },
+    { text: "Expenses", value: "expense" },
+    { text: "Net", value: "net" },
+    { text: "Detail", value: "detail" },
+];
+
 const selectedYear = ref(props.filters.year);
 
 function applyFilter() {
@@ -144,41 +152,35 @@ const totalNet     = computed(() => totalIncome.value - totalExpense.value);
                     <h2 class="text-sm font-semibold text-slate-800">Monthly Breakdown</h2>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
-                                <th class="px-6 py-3 text-left font-semibold">Month</th>
-                                <th class="px-6 py-3 text-right font-semibold">Income</th>
-                                <th class="px-6 py-3 text-right font-semibold">Expenses</th>
-                                <th class="px-6 py-3 text-right font-semibold">Net</th>
-                                <th class="px-6 py-3 text-center font-semibold">Detail</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr
-                                v-for="m in summaries"
-                                :key="m.month"
-                                class="hover:bg-slate-50 transition-colors"
+                    <EasyDataTable
+                        :headers="headers"
+                        :items="summaries"
+                        table-class-name="customize-table"
+                        theme-color="#10b981"
+                    >
+                        <template #item-month="m">
+                            <span class="font-medium text-slate-800">{{ m.label }} {{ filters.year }}</span>
+                        </template>
+                        <template #item-income="{ income }">
+                            <span class="text-emerald-600 font-medium">{{ formatIDR(income) }}</span>
+                        </template>
+                        <template #item-expense="{ expense }">
+                            <span class="text-rose-600 font-medium">{{ formatIDR(expense) }}</span>
+                        </template>
+                        <template #item-net="{ net }">
+                            <span :class="['font-semibold', net >= 0 ? 'text-emerald-600' : 'text-rose-600']">
+                                {{ net >= 0 ? '+' : '' }}{{ formatIDR(net) }}
+                            </span>
+                        </template>
+                        <template #item-detail="m">
+                            <Link
+                                :href="route('reports.monthly', { month: m.month, year: filters.year })"
+                                class="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
                             >
-                                <td class="px-6 py-3 font-medium text-slate-800">{{ m.label }} {{ filters.year }}</td>
-                                <td class="px-6 py-3 text-right text-emerald-600 font-medium">{{ formatIDR(m.income) }}</td>
-                                <td class="px-6 py-3 text-right text-rose-600 font-medium">{{ formatIDR(m.expense) }}</td>
-                                <td class="px-6 py-3 text-right">
-                                    <span :class="['font-semibold', m.net >= 0 ? 'text-emerald-600' : 'text-rose-600']">
-                                        {{ m.net >= 0 ? '+' : '' }}{{ formatIDR(m.net) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-3 text-center">
-                                    <Link
-                                        :href="route('reports.monthly', { month: m.month, year: filters.year })"
-                                        class="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
-                                    >
-                                        View →
-                                    </Link>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                View →
+                            </Link>
+                        </template>
+                    </EasyDataTable>
                 </div>
             </div>
         </div>

@@ -26,6 +26,20 @@ class TransactionController extends Controller
     {
         $filters = $request->only(['type', 'account_id', 'category_id', 'month', 'year', 'date_from', 'date_to']);
 
+        $hasDateRange = !empty($filters['date_from']) || !empty($filters['date_to']);
+
+        if (! $request->has('month') && !$hasDateRange) {
+            $filters['month'] = now()->format('n');
+        } elseif (isset($filters['month']) && $filters['month'] === 'all') {
+            unset($filters['month']);
+        }
+
+        if (! $request->has('year') && !$hasDateRange) {
+            $filters['year'] = now()->format('Y');
+        } elseif (isset($filters['year']) && $filters['year'] === 'all') {
+            unset($filters['year']);
+        }
+
         $transactions = $this->transactionService->getPaginated($request->user(), $filters);
         $summary      = $this->transactionService->getSummary($request->user(), $filters);
 

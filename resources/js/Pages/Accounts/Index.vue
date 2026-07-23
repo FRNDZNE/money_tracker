@@ -12,6 +12,15 @@ const props = defineProps({
     accounts: Array,
 });
 
+const headers = [
+    { text: "Name", value: "name", sortable: true },
+    { text: "Type", value: "type", sortable: true },
+    { text: "Initial", value: "initial_balance", sortable: true },
+    { text: "Balance", value: "balance", sortable: true },
+    { text: "Status", value: "is_active", sortable: true },
+    { text: "Actions", value: "actions" },
+];
+
 // ── Modal state ──────────────────────────────────────────
 const showModal = ref(false);
 const editingAccount = ref(null);
@@ -120,49 +129,42 @@ const deleteAccount = async (account) => {
         <div class="p-6 lg:p-8">
             <div v-if="accounts?.length" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm min-w-[600px]">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Initial</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Balance</th>
-                                <th class="text-center px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="account in accounts" :key="account.id" class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4 font-medium text-slate-900">{{ account.name }}</td>
-                                <td class="px-6 py-4">
-                                    <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', accountTypeBadge(account.type)]">
-                                        {{ accountTypeLabel(account.type) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right text-slate-500">{{ formatCurrency(account.initial_balance) }}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <span :class="['font-semibold', account.balance >= 0 ? 'text-slate-900' : 'text-rose-600']">
-                                        {{ formatCurrency(account.balance) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', account.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500']">
-                                        {{ account.is_active ? 'Active' : 'Inactive' }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button @click="openEdit(account)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                                            Edit
-                                        </button>
-                                        <button @click="deleteAccount(account)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">
-                                            Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <EasyDataTable
+                        :headers="headers"
+                        :items="accounts"
+                        table-class-name="customize-table"
+                        theme-color="#10b981"
+                        buttons-pagination
+                    >
+                        <template #item-type="{ type }">
+                            <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', accountTypeBadge(type)]">
+                                {{ accountTypeLabel(type) }}
+                            </span>
+                        </template>
+                        <template #item-initial_balance="{ initial_balance }">
+                            <span class="text-slate-500">{{ formatCurrency(initial_balance) }}</span>
+                        </template>
+                        <template #item-balance="{ balance }">
+                            <span :class="['font-semibold', balance >= 0 ? 'text-slate-900' : 'text-rose-600']">
+                                {{ formatCurrency(balance) }}
+                            </span>
+                        </template>
+                        <template #item-is_active="{ is_active }">
+                            <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500']">
+                                {{ is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </template>
+                        <template #item-actions="account">
+                            <div class="flex items-center gap-2">
+                                <button @click="openEdit(account)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                                    Edit
+                                </button>
+                                <button @click="deleteAccount(account)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">
+                                    Delete
+                                </button>
+                            </div>
+                        </template>
+                    </EasyDataTable>
                 </div>
             </div>
 

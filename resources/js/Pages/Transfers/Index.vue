@@ -13,6 +13,15 @@ const props = defineProps({
     accounts: Array,
 });
 
+const headers = [
+    { text: "Date", value: "transfer_date" },
+    { text: "From", value: "from_account" },
+    { text: "To", value: "to_account" },
+    { text: "Amount", value: "amount" },
+    { text: "Note", value: "note" },
+    { text: "Actions", value: "actions" },
+];
+
 // ── Modal state ───────────────────────────────────────────
 const showModal = ref(false);
 const editingTransfer = ref(null);
@@ -114,51 +123,49 @@ const deleteTransfer = async (id) => {
         <div class="p-6 lg:p-8">
             <div v-if="transfers?.data?.length" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm min-w-[700px]">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">From</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">To</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Note</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="transfer in transfers.data" :key="transfer.id" class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3.5 text-slate-500 whitespace-nowrap">{{ formatDate(transfer.transfer_date) }}</td>
-                                <td class="px-6 py-3.5">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
-                                            <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                            </svg>
-                                        </div>
-                                        <span class="font-medium text-slate-800">{{ transfer.from_account?.name }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-3.5">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
-                                            <svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l4-4m0 0l4 4m-4-4V3" />
-                                            </svg>
-                                        </div>
-                                        <span class="font-medium text-slate-800">{{ transfer.to_account?.name }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-3.5 text-right font-semibold text-slate-900">{{ formatCurrency(transfer.amount) }}</td>
-                                <td class="px-6 py-3.5 text-slate-500 max-w-40 truncate">{{ transfer.note || '—' }}</td>
-                                <td class="px-6 py-3.5">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button @click="openEdit(transfer)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
-                                        <button @click="deleteTransfer(transfer.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <EasyDataTable
+                        :headers="headers"
+                        :items="transfers.data"
+                        table-class-name="customize-table"
+                        theme-color="#10b981"
+                        hide-footer
+                    >
+                        <template #item-transfer_date="{ transfer_date }">
+                            <span class="text-slate-500">{{ formatDate(transfer_date) }}</span>
+                        </template>
+                        <template #item-from_account="{ from_account }">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 bg-rose-100 rounded-full flex items-center justify-center shrink-0">
+                                    <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-slate-800">{{ from_account?.name }}</span>
+                            </div>
+                        </template>
+                        <template #item-to_account="{ to_account }">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center shrink-0">
+                                    <svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l4-4m0 0l4 4m-4-4V3" />
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-slate-800">{{ to_account?.name }}</span>
+                            </div>
+                        </template>
+                        <template #item-amount="{ amount }">
+                            <span class="font-semibold text-slate-900">{{ formatCurrency(amount) }}</span>
+                        </template>
+                        <template #item-note="{ note }">
+                            <span class="text-slate-500">{{ note || '—' }}</span>
+                        </template>
+                        <template #item-actions="transfer">
+                            <div class="flex items-center gap-2">
+                                <button @click="openEdit(transfer)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
+                                <button @click="deleteTransfer(transfer.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
+                            </div>
+                        </template>
+                    </EasyDataTable>
                 </div>
                 <!-- Pagination -->
                 <div v-if="transfers.last_page > 1" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">

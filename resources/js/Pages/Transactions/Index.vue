@@ -16,6 +16,16 @@ const props = defineProps({
     filters: Object,
 });
 
+const headers = [
+    { text: "Date", value: "transaction_date" },
+    { text: "Description", value: "description" },
+    { text: "Category", value: "category" },
+    { text: "Account", value: "account" },
+    { text: "Classification", value: "classification" },
+    { text: "Amount", value: "amount" },
+    { text: "Actions", value: "actions" },
+];
+
 // ── Modal state ───────────────────────────────────────────
 const showModal = ref(false);
 const editingTransaction = ref(null);
@@ -91,7 +101,7 @@ const submit = () => {
 const filterType    = ref(props.filters?.type       || '');
 const filterAccount = ref(props.filters?.account_id || '');
 const filterMonth   = ref(props.filters?.month      || '');
-const filterYear    = ref(props.filters?.year       || new Date().getFullYear().toString());
+const filterYear    = ref(props.filters?.year       || '');
 const filterDateFrom = ref(props.filters?.date_from || '');
 const filterDateTo   = ref(props.filters?.date_to   || '');
 
@@ -104,8 +114,8 @@ const applyFilters = () => {
         {
             type:       filterType.value    || undefined,
             account_id: filterAccount.value || undefined,
-            month:      filterMonth.value   || undefined,
-            year:       filterYear.value    || undefined,
+            month:      filterMonth.value   || 'all',
+            year:       filterYear.value    || 'all',
             date_from:  filterDateFrom.value || undefined,
             date_to:    filterDateTo.value   || undefined,
         },
@@ -127,7 +137,7 @@ onUnmounted(() => clearTimeout(debounceTimer));
 const resetFilters = () => {
     filterType.value    = '';
     filterAccount.value = '';
-    filterMonth.value   = '';
+    filterMonth.value   = (new Date().getMonth() + 1).toString();
     filterYear.value    = new Date().getFullYear().toString();
     filterDateFrom.value = '';
     filterDateTo.value   = '';
@@ -306,45 +316,42 @@ const months = [
             <!-- Table -->
             <div v-if="transactions?.data?.length" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm min-w-[800px]">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Date</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Description</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Account</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Classification</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="tx in transactions.data" :key="tx.id" class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3.5 text-slate-500 whitespace-nowrap">{{ formatDate(tx.transaction_date) }}</td>
-                                <td class="px-6 py-3.5 text-slate-800 max-w-48 truncate">{{ tx.description || '—' }}</td>
-                                <td class="px-6 py-3.5">
-                                    <span class="text-slate-700">{{ tx.category?.name }}</span>
-                                    <span v-if="tx.sub_category" class="text-xs text-slate-400 block">{{ tx.sub_category.name }}</span>
-                                </td>
-                                <td class="px-6 py-3.5 text-slate-600">{{ tx.account?.name }}</td>
-                                <td class="px-6 py-3.5">
-                                    <span v-if="tx.classification" :class="['text-xs font-medium px-2.5 py-1 rounded-full capitalize', classificationBadge(tx.classification)]">{{ tx.classification }}</span>
-                                    <span v-else class="text-slate-300">—</span>
-                                </td>
-                                <td class="px-6 py-3.5 text-right">
-                                    <span :class="['font-semibold', tx.type === 'income' ? 'text-blue-600' : 'text-rose-600']">
-                                        {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-3.5">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button @click="openEdit(tx)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
-                                        <button @click="deleteTransaction(tx.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <EasyDataTable
+                        :headers="headers"
+                        :items="transactions.data"
+                        table-class-name="customize-table"
+                        theme-color="#10b981"
+                        hide-footer
+                    >
+                        <template #item-transaction_date="{ transaction_date }">
+                            <span class="text-slate-500 whitespace-nowrap">{{ formatDate(transaction_date) }}</span>
+                        </template>
+                        <template #item-description="{ description }">
+                            <span class="text-slate-800 max-w-48 truncate">{{ description || '—' }}</span>
+                        </template>
+                        <template #item-category="tx">
+                            <span class="text-slate-700">{{ tx.category?.name }}</span>
+                            <span v-if="tx.sub_category" class="text-xs text-slate-400 block">{{ tx.sub_category.name }}</span>
+                        </template>
+                        <template #item-account="tx">
+                            <span class="text-slate-600">{{ tx.account?.name }}</span>
+                        </template>
+                        <template #item-classification="{ classification }">
+                            <span v-if="classification" :class="['text-xs font-medium px-2.5 py-1 rounded-full capitalize', classificationBadge(classification)]">{{ classification }}</span>
+                            <span v-else class="text-slate-300">—</span>
+                        </template>
+                        <template #item-amount="tx">
+                            <span :class="['font-semibold', tx.type === 'income' ? 'text-blue-600' : 'text-rose-600']">
+                                {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+                            </span>
+                        </template>
+                        <template #item-actions="tx">
+                            <div class="flex items-center gap-2">
+                                <button @click="openEdit(tx)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
+                                <button @click="deleteTransaction(tx.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
+                            </div>
+                        </template>
+                    </EasyDataTable>
                 </div>
                 <!-- Pagination -->
                 <div v-if="transactions.last_page > 1" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">

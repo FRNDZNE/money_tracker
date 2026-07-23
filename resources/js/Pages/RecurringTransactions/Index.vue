@@ -14,6 +14,17 @@ const props = defineProps({
     categories: Array,
 });
 
+const headers = [
+    { text: "Description", value: "description" },
+    { text: "Category", value: "category" },
+    { text: "Account", value: "account" },
+    { text: "Frequency", value: "frequency" },
+    { text: "Next Due", value: "next_due_date" },
+    { text: "Status", value: "status" },
+    { text: "Amount", value: "amount" },
+    { text: "Actions", value: "actions" },
+];
+
 // ── Modal state ───────────────────────────────────────────
 const showModal = ref(false);
 const editingItem = ref(null);
@@ -149,48 +160,44 @@ const statusBadge = (item) => {
             <!-- Table -->
             <div v-if="recurringTransactions?.data?.length" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm min-w-[800px]">
-                        <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Description</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Account</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Frequency</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Next Due</th>
-                                <th class="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
-                                <th class="text-right px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="item in recurringTransactions.data" :key="item.id" class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-3.5 text-slate-800 max-w-48 truncate">{{ item.description || '—' }}</td>
-                                <td class="px-6 py-3.5">
-                                    <span class="text-slate-700">{{ item.category?.name }}</span>
-                                    <span v-if="item.sub_category" class="text-xs text-slate-400 block">{{ item.sub_category.name }}</span>
-                                </td>
-                                <td class="px-6 py-3.5 text-slate-600">{{ item.account?.name }}</td>
-                                <td class="px-6 py-3.5">
-                                    <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 capitalize">{{ item.frequency }}</span>
-                                </td>
-                                <td class="px-6 py-3.5 text-slate-500 whitespace-nowrap">{{ formatDate(item.next_due_date) }}</td>
-                                <td class="px-6 py-3.5">
-                                    <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', statusBadge(item).class]">{{ statusBadge(item).label }}</span>
-                                </td>
-                                <td class="px-6 py-3.5 text-right">
-                                    <span :class="['font-semibold', item.type === 'income' ? 'text-blue-600' : 'text-rose-600']">
-                                        {{ item.type === 'income' ? '+' : '-' }}{{ formatCurrency(item.amount) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-3.5">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button @click="openEdit(item)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
-                                        <button @click="deleteItem(item.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <EasyDataTable
+                        :headers="headers"
+                        :items="recurringTransactions.data"
+                        table-class-name="customize-table"
+                        theme-color="#10b981"
+                        hide-footer
+                    >
+                        <template #item-description="{ description }">
+                            <span class="text-slate-800 max-w-48 truncate">{{ description || '—' }}</span>
+                        </template>
+                        <template #item-category="item">
+                            <span class="text-slate-700">{{ item.category?.name }}</span>
+                            <span v-if="item.sub_category" class="text-xs text-slate-400 block">{{ item.sub_category.name }}</span>
+                        </template>
+                        <template #item-account="item">
+                            <span class="text-slate-600">{{ item.account?.name }}</span>
+                        </template>
+                        <template #item-frequency="{ frequency }">
+                            <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 capitalize">{{ frequency }}</span>
+                        </template>
+                        <template #item-next_due_date="{ next_due_date }">
+                            <span class="text-slate-500 whitespace-nowrap">{{ formatDate(next_due_date) }}</span>
+                        </template>
+                        <template #item-status="item">
+                            <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', statusBadge(item).class]">{{ statusBadge(item).label }}</span>
+                        </template>
+                        <template #item-amount="item">
+                            <span :class="['font-semibold', item.type === 'income' ? 'text-blue-600' : 'text-rose-600']">
+                                {{ item.type === 'income' ? '+' : '-' }}{{ formatCurrency(item.amount) }}
+                            </span>
+                        </template>
+                        <template #item-actions="item">
+                            <div class="flex items-center gap-2">
+                                <button @click="openEdit(item)" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">Edit</button>
+                                <button @click="deleteItem(item.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors">Delete</button>
+                            </div>
+                        </template>
+                    </EasyDataTable>
                 </div>
                 <!-- Pagination -->
                 <div v-if="recurringTransactions.last_page > 1" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
